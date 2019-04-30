@@ -1,0 +1,216 @@
+var chess=document.getElementById('chess');
+var context=chess.getContext('2d');
+var me=true;
+var over=false;
+//设置二维数组用来保存当下了棋子，就不能落子了
+var chessBored=[];
+for(var i=0;i< 15;i++){
+	chessBored[i]=[];
+	for(var j=0;j< 15;j++){
+	chessBored[i][j]=0;	
+		}
+	}
+//设置二维数组结束
+
+//设置赢法数组,这个是三维数组
+var wins=[];
+for(var i=0;i< 15;i++){
+	wins[i]=[];
+	for(var j=0;j< 15;j++){
+		wins[i][j]=[];
+		}
+	}
+//赢法的统计数组
+var mywins=[];
+var computerwins=[];	
+
+var count=0;
+//所有的横线赢法
+for(var i=0;i< 15;i++){
+	for(var j=0;j< 11;j++){
+		for(var k=0;k< 5;k++){
+			wins[i][j+k][count]=true;
+			}
+			count++;
+		}
+	}	
+//所有的竖线赢法
+for(var i=0;i< 15;i++){
+	for(var j=0;j< 11;j++){
+		for(var k=0;k< 5;k++){
+			wins[j+k][i][count]=true;
+			}
+			count++;
+		}
+	}		
+//所有的斜线的赢法
+for(var i=0;i< 11;i++){
+	for(var j=0;j< 11;j++){
+		for(var k=0;k< 5;k++){
+			wins[i+k][j+k][count]=true;
+			}
+			count++;
+		}
+	}		
+//所有反斜线的赢法
+for(var i=0;i< 11;i++){
+	for(var j=14;j>3;j--){
+		for(var k=0;k< 5;k++){
+			wins[i+k][j-k][count]=true;
+			}
+			count++;
+		}
+	}		
+for(var i=0;i< count;i++){
+	mywins[i]=[];
+	computerwins[i]=[];
+	}		
+//设置赢法结束
+context.strokeStyle="#BFBFBF";
+//棋盘水印开始
+var logo=new Image();
+logo.src="44.jpg";
+logo.onload=function(){  //这个是使图片显示，因为有个时间，加载完成，要用onload事件，记住
+	context.drawImage(logo,0,0,450,450);
+	drawchess();          //调用这个是使水印在棋盘下面，便于好看，
+}
+//棋盘水印结束
+var drawchess=function(){
+//画棋盘开始
+for(var i=0;i<15;i++){
+	context.moveTo(15+i*30,15);  //这是横的部分代码
+	context.lineTo(15+i*30,435);
+	context.stroke();
+	context.moveTo(15,15+i*30);  //这是竖线的代码
+	context.lineTo(435,15+i*30);
+	context.stroke();
+	}
+//画棋盘结束	
+	}	
+	
+var onStep=function(i,j,me){
+	//画子开始
+context.beginPath();
+context.arc(15+i*30,15+ j*30,13,0,2*Math.PI);  //1,2代表的是圆心坐标，3是半径，4,5是代表扇形起始和终止
+context.closePath(); 
+var gradient=context.createRadialGradient(15+i*30+2,15+ j*30-2,13,15+i*30+2,15+ j*30-2,0); //返回一个渐变对象，1，2代表的是圆心坐标，3是半径，456也是同理
+if(me){                           //这里是判断是那个棋子，黑棋还是白棋
+gradient.addColorStop(0,"#0A0A0A");   //0是代表第一个圆，1是代表第二个圆
+gradient.addColorStop(1,"#636766");	
+}else{
+gradient.addColorStop(0,"#D1D1D1");
+gradient.addColorStop(1,"#F9F9F9");		
+	}
+context.fillStyle=gradient; //切记，fillStyle这里填充的颜色，是用到前面返回的两个对象
+context.fill();
+//画子结束 	
+	
+	}	
+	
+//下棋开始
+chess.onclick=function(e){
+	if(over){	return;	}  //这个是判断下棋是否结束
+		if(!me){  //这个是判断当时白棋时，就是电脑下，自己不能下
+		return;	
+			}
+	var e=e || window.event;
+	var x=e.offsetX;
+	var y=e.offsetY;
+	var i=Math.floor(x/30);
+	var j=Math.floor(y/30);
+	if(chessBored[i][j] ==0){
+    onStep(i,j,me);
+    chessBored[i][j]=1;	
+    for(var k=0;k< count;k++){  //这是赢法的个数
+	  	if(wins[i][j][k]){     //这个是代表下个那个位置的方法，
+	  		mywins[k]++;         //这个是李那个更近一步
+	  		computerwins[k]=6;    //等于6是代表电脑在这个方法不可以赢了
+	  		if(mywins[k] == 5){
+	  			window.alert("你赢了");
+	  			over=true;
+	  			}
+	  		}
+	  	}
+	  	if(!over){
+	  	  me = !me;	    //这个是判断黑白棋的交换		
+	  		computerAI();
+	  		}
+		}
+	}	
+
+var computerAI=function(){
+	var mywinsScroce=[];
+	var computersScroce=[];
+		var maxs=0;     //用来保存最高的分数
+	  var u=0,v=0;  //这个是代表那个赢得点坐标	
+	for(var i=0;i< 15;i++){
+		mywinsScroce[i]=[];
+		computersScroce[i]=[];
+		for(var j=0;j< 15;j++){
+			mywinsScroce[i][j]=0;
+			computersScroce[i][j]=0;
+			}
+		}
+	for(var i=0;i< 15;i++){
+		for(var j=0;j< 15;j++){
+			if(chessBored[i][j]==0){   //这个是代表没有下子的情况
+			for(var k=0;k< count;k++){  //这个k的位置不能写5，要写count，因为这里是所有的方法
+				if(wins[i][j][k]){
+				//玩家赢分	
+				if(mywins[k]==1){
+					mywinsScroce[i][j]+=200;
+					} else if(mywins[k]==2){
+					mywinsScroce[i][j]+=400;	
+						}	else if(mywins[k]==3){
+							mywinsScroce[i][j] +=2000;
+					} else if(mywins[k]==4){
+						mywinsScroce[i][j] +=10000;
+					}
+				//玩家赢分结束,电脑赢分	
+				if(computerwins[k]==1){
+					computersScroce[i][j] +=220;
+					}	else if(computerwins[k]==2){
+						computersScroce[i][j] +=420;
+						}else if(computerwins[k]==3){
+						computersScroce[i][j] +=2200;	
+							}else if(computerwins[k]==4){
+								computersScroce[i][j] +=22000;
+								}
+				//电脑赢分结束	
+					}
+				}	
+		//玩家计分开始		
+	   if(mywinsScroce[i][j] > maxs){
+	   	maxs=mywinsScroce[i][j];
+	   	u=i;
+	   	v=j;
+	   	}
+		//玩家计分结束
+		if(computersScroce[i][j] > maxs){
+	   	maxs=computersScroce[i][j];
+	   	u=i;
+	   	v=j;
+	   	}
+				}
+			}
+		}
+//计算机下棋开始
+	onStep(u,v,false);
+	chessBored[u][v]=2; //这个是代表计算机下的棋子
+  for(var k=0;k< count;k++){
+  	if(wins[u][v][k]){
+  		computerwins[k]++;
+  		mywins[k]=6;
+  		if(computerwins[k] == 5){
+  			window.alert("计算机赢了");
+  			over=true;
+  			}
+  		}
+  		}	
+  	if(!over){
+  	me= !me;	   //这是黑白棋进行交换
+  		}
+
+}
+
+	
